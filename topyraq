@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Monitor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; }
+        .container { max-width: 900px; margin: auto; padding: 20px; }
+        .header { background: #2d6a4f; color: white; padding: 15px; text-align: center; border-radius: 10px; }
+        .btn-main { background: #40916c; color: white; border-radius: 5px; padding: 10px 15px; border: none; }
+        .btn-main:hover { background: #1b4332; }
+        video, canvas { width: 100%; max-width: 400px; border-radius: 10px; display: block; margin: auto; }
+        .section { background: white; padding: 20px; border-radius: 10px; margin-top: 20px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); }
+        table { width: 100%; text-align: center; }
+        th, td { padding: 10px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>Уход за растением</h1>
+        <button class="btn-main" onclick="captureImage()">📷 Камера</button>
+        <button class="btn-main" onclick="connectToSensor()">🌡 Анализ</button>
+        <button class="btn-main" onclick="getRecommendations()">💡 Рекомендации</button>
+    </div>
+
+    <div class="section text-center">
+        <video id="camera" autoplay></video>
+        <canvas id="snapshot" style="display:none;"></canvas>
+    </div>
+
+    <div class="section">
+        <h2>📊 Данные датчика влажности</h2>
+        <p id="moisture">Влажность: -</p>
+    </div>
+
+    <div class="section">
+        <h2>💡 Рекомендации</h2>
+        <p id="advice">Здесь появятся советы...</p>
+    </div>
+
+    <div class="section">
+        <h2>📅 Календарь полива</h2>
+        <button class="btn-main" onclick="addWateringRecord()">Добавить запись</button>
+        <table>
+            <tr>
+                <th>Дата</th>
+                <th>Время</th>
+            </tr>
+            <tbody id="calendar"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Включение камеры
+    navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+        document.getElementById('camera').srcObject = stream;
+    });
+
+    // Функция для фото
+    function captureImage() {
+        let video = document.getElementById('camera');
+        let canvas = document.getElementById('snapshot');
+        let context = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        alert("Фото сделано! (Анализ можно добавить позже)");
+    }
+
+    // Подключение к датчику влажности
+    async function connectToSensor() {
+        try {
+            const device = await navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,
+                optionalServices: ['battery_service']
+            });
+            const server = await device.gatt.connect();
+            const service = await server.getPrimaryService('battery_service');
+            const characteristic = await service.getCharacteristic('battery_level');
+
+            characteristic.addEventListener('characteristicvaluechanged', event => {
+                let moisture = event.target.value.getUint8(0);
+                document.getElementById('moisture').innerText = `Влажность: ${moisture}%`;
+                updateAdvice(moisture);
+            });
+
+            await characteristic.startNotifications();
+            alert("Датчик подключен!");
+        } catch (error) {
+            alert("Ошибка: " + error);
+        }
+    }
+
+    // Функция анализа состояния
+    function updateAdvice(moisture) {
+        let advice = document.getElementById('advice');
+        if (moisture < 30) {
+            advice.innerText = "Растение нуждается в поливе!";
+        } else if (moisture > 70) {
+            advice.innerText = "Слишком много воды, дайте почве подсохнуть.";
+        } else {
+            advice.innerText = "Влажность в норме.";
+        }
+    }
+
+    // Добавление записи в календарь
+    function addWateringRecord() {
+        let table = document.getElementById("calendar");
+        let row = table.insertRow();
+        let dateCell = row.insertCell(0);
+        let timeCell = row.insertCell(1);
+        let now = new Date();
+        dateCell.innerText = now.toLocaleDateString();
+        timeCell.innerText = now.toLocaleTimeString();
+    }
+</script>
+
+</body>
+</html>
