@@ -1,6 +1,8 @@
 # topyraq.lab
 import { useState } from "react";
-
+npx create-react-app my-smart-garden
+cd my-smart-garden
+npm install
 export default function SmartGardenApp() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [reminders, setReminders] = useState({});
@@ -65,5 +67,14 @@ app.post("/update-data", (req, res) => {
 app.get("/get-data", (req, res) => {
   res.send({ value: sensorData });
 });
-
 app.listen(3001, () => console.log("Сервер запущен на порту 3001"));
+"scripts": {
+  "start": "react-scripts start",
+  "build": "react-scripts build"
+}
+/my-smart-garden
+  ├── src/
+  ├── public/
+  ├── package.json
+  ├── .gitignore
+  ├── README.md
