@@ -15,7 +15,6 @@ export default function SmartGardenApp() {
       setReminders({ ...reminders, [dateKey]: "Полив растений" });
     }
   };
-
   const connectToDevice = async () => {
     try {
       const device = await navigator.bluetooth.requestDevice({
